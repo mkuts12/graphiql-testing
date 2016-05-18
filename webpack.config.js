@@ -11,17 +11,17 @@ module.exports = {
   module: {
     loaders: [
       {
+        test: /.*\.css$/,
+        loaders:[ 'style', 'css' ],
+      },{
         test: /.*\.(js||jsx)$/,
         loader: 'babel',
         query: {
           cacheDirectory: true,
-          presets: ['es2015', 'stage-0', 'react']
+          presets: ['es2015', 'stage-0', 'react'],
         },
         exclude: /node_modules/,
-      },{
-        test: /.*\.css$/,
-        loaders:[ 'style', 'css' ],
-      },
+      }
     ]
   },
   plugins: [
