@@ -1,12 +1,7 @@
 import Express from 'express';
 import path from 'path';
 import expressGraphql from 'express-graphql';
-import {
-  graphql,
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLInt,
-} from 'graphql';
+import schema from './graphql/scheme.js';
 
 let app = Express();
 let port = process.env.PORT ? process.env.PORT  : 8080;
@@ -14,19 +9,8 @@ let port = process.env.PORT ? process.env.PORT  : 8080;
 
 app.use('/', Express.static('./public'));
 app.use('/graphql', expressGraphql( request => ( {
-  schema: new GraphQLSchema({
-    query: new GraphQLObjectType({
-      name: 'QRoot',
-      fields: {
-        name:{
-          type: GraphQLInt,
-          resolve(){
-            return 1;
-          },
-        },
-      },
-    }),
-  }),
+  schema,
+  graphiql: true,
 } ) ));
 
 app.listen( port, () => {

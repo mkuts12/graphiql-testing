@@ -12,4 +12,4 @@ function fetcher (params){
   }).then( res => res.json() );
 }
 
-ReactDom.render(<Graphiql fetcher={fetcher} />, document.getElementById('hello'));
+// ReactDom.render(<Graphiql fetcher={fetcher} />, document.getElementById('hello'));
