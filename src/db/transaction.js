@@ -54,13 +54,13 @@ function begin ( client ){
   } )
 }
 
-let end = curry( ( client, results ) => {
+let commit = curry( ( client, results ) => {
   return new Promise( ( res, rej ) => {
     client.query('commit', ( err, result ) => {
       if( defined(err) ){
         reject( Object.assign( err, { failedAfter: 'end' } ) ); //TODO
       }
-      resolve({ status: 'success', results });
+      resolve( results );
     })
   } )
 } ) 
@@ -86,9 +86,17 @@ function doQueries ( queries, index, client, done ){
 
 export default function ( queries ) {
   connect().then( ({ client, done }) => {
-    begin( client )
-    .then( doQueries( client, queries ) )
-    .then( end(client) ) //TODO add the done
+    begin( client ).then(
+      doQueries( client, queries )
+    ).then(
+      commit(client)
+    ).then( results => {
+      done();
+      return {
+        status: 'success',
+        results,
+      };
+    } ) //TODO add the done
     .catch( err => {
       return rollback( client ).then( () => {
         done();
