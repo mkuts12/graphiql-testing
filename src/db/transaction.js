@@ -1,6 +1,6 @@
 import pg from 'pg';
 import params from '../../database.json';
-import { prop, compose } from 'ramda';
+import { curry, compose } from 'ramda';
 
 // export default class Transaction {
 //   let tran;
@@ -14,6 +14,16 @@ import { prop, compose } from 'ramda';
 
 function defined ( obj ){
   return obj;
+}
+
+function appendParamsToError( err,  ){
+  console.error( string );
+  return {
+    status: 'error',
+    description: error.message,
+    client, 
+    done,
+  };
 }
 
 function connect () {
@@ -38,16 +48,13 @@ function begin ({ client, done }){
       if( defined(err) ){
         rej( Object.assign( err, { failedAfter: 'begin', done } ) ) ;
       }
-      return {
-        client,
-        done,
-      };
+      resolve();
     })
 
   } )
 }
 
-function end ({ client, done, results }){
+function end ( { client, done }, results ){
   client.query('end', ( err, result ) => {
     if( defined(err) ){
       throw Object.assign( err, { failedAfter: 'end', done } );
@@ -80,10 +87,10 @@ function doQueries ( queries, index, client, done ){
 }
 
 export default function ( queries ) {
-  
-  connect().catch(connectionError).then(begin).then(doQueries.bind(this, queries)).then(end).catch(rollback);
-}
-
-class Transaction {
-
+  connect().then( ({ client, done }) => {
+    begin({ client, done })
+    .then(doQueries.bind(this, queries))
+    .then(end)
+    .catch(rollback)
+  } ).catch(connectionError);
 }
