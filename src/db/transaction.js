@@ -33,15 +33,18 @@ function connect () {
 }
 
 function begin ({ client, done }){
-  client.query('begin', ( err, result ) => {
-    if( defined(err) ){
-      throw Object.assign( err, { failedAfter: 'begin', done } );
-    }
-    return {
-      client,
-      done,
-    };
-  })
+  return new Promise( ( res, rej ) => {
+    client.query('begin', ( err, result ) => {
+      if( defined(err) ){
+        rej( Object.assign( err, { failedAfter: 'begin', done } ) ) ;
+      }
+      return {
+        client,
+        done,
+      };
+    })
+
+  } )
 }
 
 function end ({ client, done, results }){
