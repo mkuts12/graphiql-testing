@@ -16,7 +16,7 @@ function defined ( obj ){
   return obj;
 }
 
-function appendParamsToError( err,  ){
+function appendParamsToError( err,  ){ //TODO
   console.error( string );
   return {
     status: 'error',
@@ -32,7 +32,7 @@ function connect () {
   return new Promise(( res, rej ) => {
     pg.connect( connstring, ( err, client, done ) => {
       if( defined(err) ){
-        reject( err );
+        reject( err ); //TODO
       }
       resolve({
         client,
@@ -42,11 +42,11 @@ function connect () {
   });
 }
 
-function begin ({ client, done }){
+function begin ( client ){
   return new Promise( ( res, rej ) => {
     client.query('begin', ( err, result ) => {
       if( defined(err) ){
-        rej( Object.assign( err, { failedAfter: 'begin', done } ) ) ;
+        rej( Object.assign( err, { failedAfter: 'begin' } ) ) ; //TODO
       }
       resolve();
     })
@@ -54,29 +54,27 @@ function begin ({ client, done }){
   } )
 }
 
-function end ( { client, done }, results ){
-  client.query('end', ( err, result ) => {
-    if( defined(err) ){
-      throw Object.assign( err, { failedAfter: 'end', done } );
-    }
-    done();
-    return { status: 'success', results };
-  })
-}
+let end = curry( ( client, results ) => {
+  return new Promise( ( res, rej ) => {
+    client.query('commit', ( err, result ) => {
+      if( defined(err) ){
+        reject( Object.assign( err, { failedAfter: 'end' } ) ); //TODO
+      }
+      resolve({ status: 'success', results });
+    })
+  } )
+} ) 
 
-function rollback ( err ){
-  client.query('rollback', ( err, result ) => {
-    err.done();
-    if( defined(err) ){
-      //TODO debug error
-    }
-    return {
-      status: 'error',
-      description: `error happened when doing ${ err.failedAfter }`,
-    };
-  })
-
-}
+function rollback ( client ) {
+  return new Promise( ( res, rej ) => {
+    client.query('rollback', ( err, result ) => {
+      if( defined(err) ){
+        reject( err );
+      }
+      resolve();
+    })
+  } )
+} 
 
 function recurse ( queries, index, cb ){
   
@@ -88,9 +86,22 @@ function doQueries ( queries, index, client, done ){
 
 export default function ( queries ) {
   connect().then( ({ client, done }) => {
-    begin({ client, done })
-    .then(doQueries.bind(this, queries))
-    .then(end)
-    .catch(rollback)
+    begin( client )
+    .then( doQueries( client, queries ) )
+    .then( end(client) ) //TODO add the done
+    .catch( err => {
+      return rollback( client ).then( () => {
+        done();
+        return {
+          status: 'error',
+          description: `Transaction failed after ${ err.failedAfter }`,
+        }
+      } ).catch( err => {
+        return {
+          status: 'error',
+          description: 'Transaction failed after rollback',
+        }
+      } )
+    } )
   } ).catch(connectionError);
 }
