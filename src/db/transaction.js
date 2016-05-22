@@ -80,7 +80,6 @@ let doQueries =( client, queries ) => ( () => {
         console.log('quriying');
         client.query( query.qry, query.params, ( err, res ) => {
           if( defined(err) ){
-            console.log(JSON.stringify(error))
             reject( Object.assign( err, { failedAfter: query.qry } ) );
           }
           resolve( resArr.concat( JSON.stringify( res.rows ) ) );
