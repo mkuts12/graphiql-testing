@@ -22,6 +22,7 @@
     "graphiql": "^0.7.1",
     "graphql": "^0.6.0",
     "isomorphic-fetch": "^2.2.1",
+    "ramda": "^0.21.0",
     "react": "^15.0.2",
     "react-dom": "^15.0.2",
     "style-loader": "^0.13.1",
