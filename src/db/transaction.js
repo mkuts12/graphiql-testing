@@ -80,7 +80,7 @@ function recurse ( queries, index, cb ){
   
 }
 
-function doQueries ( client, queries, index ){
+let doQueries = curry (( client, queries, index ) => {
   return queries.map( query => (
     ( resArr ) => (
       new Promise( ( res, rej ) => {
@@ -95,7 +95,7 @@ function doQueries ( client, queries, index ){
   ) ).reduce( ( prev, curr ) => (
     prev.then(curr)
   ), Promise.resolve() );
-}
+})
 
 export default function ( queries ) {
   connect().then( ({ client, done }) => {
