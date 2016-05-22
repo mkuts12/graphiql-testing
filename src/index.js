@@ -1,7 +1,7 @@
 import Express from 'express';
 import path from 'path';
 import expressGraphql from 'express-graphql';
-import schema from './graphql/scheme.js';
+import schema from './graphql/schema.js';
 
 let app = Express();
 let port = process.env.PORT ? process.env.PORT  : 8080;
