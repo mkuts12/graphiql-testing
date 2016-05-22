@@ -83,7 +83,7 @@ let doQueries =( client, queries ) => ( () => {
             console.log(JSON.stringify(error))
             reject( Object.assign( err, { failedAfter: query.qry } ) );
           }
-          resolve( resArr.concat( 2 ).concat(3) );
+          resolve( resArr.concat( res.rows ) );
         } );
       } )
     )
