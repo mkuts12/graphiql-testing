@@ -32,9 +32,9 @@ function connect () {
   return new Promise(( res, rej ) => {
     pg.connect( connstring, ( err, client, done ) => {
       if( defined(err) ){
-        reject( err ); //TODO
+        rej( err ); //TODO
       }
-      resolve({
+      res({
         client,
         done,
       });
@@ -48,7 +48,7 @@ function begin ( client ){
       if( defined(err) ){
         rej( Object.assign( err, { failedAfter: 'begin' } ) ) ;
       }
-      resolve();
+      res();
     })
 
   } )
@@ -58,9 +58,9 @@ let commit = curry( ( client, results ) => {
   return new Promise( ( res, rej ) => {
     client.query('commit', ( err, result ) => {
       if( defined(err) ){
-        reject( Object.assign( err, { failedAfter: 'commit' } ) );
+        rej( Object.assign( err, { failedAfter: 'commit' } ) );
       }
-      resolve( results );
+      res( results );
     })
   } )
 } ) 
@@ -69,9 +69,9 @@ function rollback ( client ) {
   return new Promise( ( res, rej ) => {
     client.query('rollback', ( err, result ) => {
       if( defined(err) ){
-        reject( err );
+        rej( err );
       }
-      resolve();
+      res();
     })
   } )
 } 
@@ -86,7 +86,7 @@ let doQueries = curry (( client, queries, index ) => {
       new Promise( ( res, rej ) => {
         client.query( query.qry, query.params, ( err, res ) => {
           if( defined(err) ){
-            reject( Object.assign( err, { failedAfter: query.qry } ) );
+            rej( Object.assign( err, { failedAfter: query.qry } ) );
           }
           res( resArr.concat( res ) );
         } );
