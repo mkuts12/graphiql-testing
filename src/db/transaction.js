@@ -46,7 +46,7 @@ function begin ( client ){
   return new Promise( ( res, rej ) => {
     client.query('begin', ( err, result ) => {
       if( defined(err) ){
-        rej( Object.assign( err, { failedAfter: 'begin' } ) ) ; //TODO
+        rej( Object.assign( err, { failedAfter: 'begin' } ) ) ;
       }
       resolve();
     })
@@ -58,7 +58,7 @@ let commit = curry( ( client, results ) => {
   return new Promise( ( res, rej ) => {
     client.query('commit', ( err, result ) => {
       if( defined(err) ){
-        reject( Object.assign( err, { failedAfter: 'end' } ) ); //TODO
+        reject( Object.assign( err, { failedAfter: 'commit' } ) );
       }
       resolve( results );
     })
@@ -80,8 +80,21 @@ function recurse ( queries, index, cb ){
   
 }
 
-function doQueries ( queries, index, client, done ){
-
+function doQueries ( client, queries, index ){
+  return queries.map( query => (
+    ( resArr ) => (
+      new Promise( ( res, rej ) => {
+        client.query( query.qry, query.params, ( err, res ) => {
+          if( defined(err) ){
+            reject( Object.assign( err, { failedAfter: query.qry } ) );
+          }
+          res( resArr.concat( res ) );
+        } );
+      } )
+    )
+  ) ).reduce( ( prev, curr ) => (
+    prev.then(curr)
+  ), Promise.resolve() );
 }
 
 export default function ( queries ) {
@@ -96,7 +109,7 @@ export default function ( queries ) {
         status: 'success',
         results,
       };
-    } ) //TODO add the done
+    } )
     .catch( err => {
       return rollback( client ).then( () => {
         done();
