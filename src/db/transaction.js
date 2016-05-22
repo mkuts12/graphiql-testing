@@ -55,9 +55,9 @@ let commit = curry( ( client, results ) => {
       if( defined(err) ){
         rej( Object.assign( err, { failedAfter: 'commit' } ) );
       }
-      res( results );
+      res( results.concat( result.rows ) );
     })
-  } )
+  } );
 } ) 
 
 function rollback ( client ) {
@@ -72,9 +72,9 @@ function rollback ( client ) {
   } )
 } 
 
-let doQueries = ( client, queries ) => {
+let doQueries =( client, queries ) => ( () => {
   console.log('doing');
-  return queries.map( query => (
+  let a = queries.map( query => (
     ( resArr ) => (
       new Promise( ( resolve, reject ) => {
         console.log('quriying');
@@ -83,21 +83,22 @@ let doQueries = ( client, queries ) => {
             console.log(JSON.stringify(error))
             reject( Object.assign( err, { failedAfter: query.qry } ) );
           }
-          resolve( resArr.concat( res ) );
+          resolve( resArr.concat( 2 ).concat(3) );
         } );
       } )
     )
   ) ).reduce( ( prev, curr ) => (
   prev.then(curr)
   ), Promise.resolve([]) );
-}
+  return a;
+});
 
 export default function ( queries ) {
   let temp = connect().then( ({ client, done }) => {
     return begin( client ).then(
       doQueries( client, queries )
     ).then(
-      commit(client)
+      commit( client )
     ).then( results => {
       done();
       console.log('donned');
