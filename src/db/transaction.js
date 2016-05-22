@@ -1,5 +1,5 @@
 import pg from 'pg';
-import params from '../../database.json';
+import { dev as params } from '../../database.json';
 import { curry, compose } from 'ramda';
 
 // export default class Transaction {
@@ -16,21 +16,14 @@ function defined ( obj ){
   return obj;
 }
 
-function appendParamsToError( err,  ){ //TODO
-  console.error( string );
-  return {
-    status: 'error',
-    description: error.message,
-    client, 
-    done,
-  };
+function connString() {
+  return `pg://michael:1234@172.17.0.1:5432/gamification`
 }
 
 function connect () {
-  let connstring = `pg://${ params.user }:${ params.password }
-    @${ params.host }:${ params.port }/${ params.database }`;
+  console.log('connecting');
   return new Promise(( res, rej ) => {
-    pg.connect( connstring, ( err, client, done ) => {
+    pg.connect( connString(), ( err, client, done ) => {
       if( defined(err) ){
         rej( err ); //TODO
       }
@@ -43,6 +36,7 @@ function connect () {
 }
 
 function begin ( client ){
+  console.log('beginning');
   return new Promise( ( res, rej ) => {
     client.query('begin', ( err, result ) => {
       if( defined(err) ){
@@ -55,6 +49,7 @@ function begin ( client ){
 }
 
 let commit = curry( ( client, results ) => {
+  console.log('commiting');
   return new Promise( ( res, rej ) => {
     client.query('commit', ( err, result ) => {
       if( defined(err) ){
@@ -66,6 +61,7 @@ let commit = curry( ( client, results ) => {
 } ) 
 
 function rollback ( client ) {
+  console.log('rolling');
   return new Promise( ( res, rej ) => {
     client.query('rollback', ( err, result ) => {
       if( defined(err) ){
@@ -76,43 +72,43 @@ function rollback ( client ) {
   } )
 } 
 
-function recurse ( queries, index, cb ){
-  
-}
-
-let doQueries = curry (( client, queries, index ) => {
+let doQueries = ( client, queries ) => {
+  console.log('doing');
   return queries.map( query => (
     ( resArr ) => (
-      new Promise( ( res, rej ) => {
+      new Promise( ( resolve, reject ) => {
+        console.log('quriying');
         client.query( query.qry, query.params, ( err, res ) => {
           if( defined(err) ){
-            rej( Object.assign( err, { failedAfter: query.qry } ) );
+            console.log(JSON.stringify(error))
+            reject( Object.assign( err, { failedAfter: query.qry } ) );
           }
-          res( resArr.concat( res ) );
+          resolve( resArr.concat( res ) );
         } );
       } )
     )
   ) ).reduce( ( prev, curr ) => (
-    prev.then(curr)
-  ), Promise.resolve() );
-})
+  prev.then(curr)
+  ), Promise.resolve([]) );
+}
 
 export default function ( queries ) {
-  connect().then( ({ client, done }) => {
-    begin( client ).then(
+  let temp = connect().then( ({ client, done }) => {
+    return begin( client ).then(
       doQueries( client, queries )
     ).then(
       commit(client)
     ).then( results => {
       done();
+      console.log('donned');
       return {
         status: 'success',
-        results,
+        results: results,
       };
-    } )
-    .catch( err => {
+    } ).catch( err => {
       return rollback( client ).then( () => {
         done();
+        console.log('failing');
         return {
           status: 'error',
           description: `Transaction failed after ${ err.failedAfter }`,
@@ -124,5 +120,6 @@ export default function ( queries ) {
         }
       } )
     } )
-  } ).catch(connectionError);
+  } ).catch( err => console.log(`Error in last catch is ${err}`));
+  return temp;
 }
